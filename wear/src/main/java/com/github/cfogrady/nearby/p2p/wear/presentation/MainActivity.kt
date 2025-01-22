@@ -19,7 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.github.cfogrady.nearby.connections.p2p.ConnectionStatus
 import com.github.cfogrady.nearby.connections.p2p.NearbyP2PConnection
-import com.github.cfogrady.nearby.connections.p2p.ui.DisplayMatchingDevices
+import com.github.cfogrady.nearby.connections.p2p.wear.ui.DisplayMatchingDevices
 import com.github.cfogrady.nearby.p2p.wear.presentation.theme.NearbyTheme
 import java.nio.charset.StandardCharsets
 import kotlin.random.Random
@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun WearApp(greetingName: String) {
-        NearbyTheme {
+        NearbyTheme(this) {
             val connectionState by nearbyConnections.connectionStatus.collectAsState()
             var selectedDevicePairingName by remember { mutableStateOf("") }
             LaunchedEffect(connectionState) {

@@ -1,4 +1,4 @@
-package com.github.cfogrady.nearby.connections.p2p.ui
+package com.github.cfogrady.nearby.connections.p2p.wear.ui
 
 import android.util.Log
 import androidx.compose.animation.core.animateIntAsState
@@ -6,14 +6,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.wear.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -28,6 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.wear.compose.material3.CompactButton
+import androidx.wear.tooling.preview.devices.WearDevices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -42,45 +40,34 @@ fun DisplayMatchingDevices(deviceName: String, deviceIdAndNameFlow: Flow<String>
             devicePairingNames.add(it)
         }
     }
-    Column(modifier = Modifier.fillMaxSize()) {
-        Column(verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth().weight(1f)) {
-            Surface {
-                Text(text = "Device Id: $deviceName", fontWeight = FontWeight.Bold, fontSize = 8.em, modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 0.dp))
-            }
-            HorizontalDivider(modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 5.dp))
+    Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Top) {
+        Text(text = "Device Id: $deviceName", fontWeight = FontWeight.Bold, fontSize = 2.em, modifier = Modifier.padding(5.dp, 10.dp, 5.dp, 0.dp))
+        CompactButton(onClick = {
+            rescan.invoke()
+            devicePairingNames.clear()
+        }) {
+            Text("Rescan")
         }
+        Text(text="Select Other Device", fontSize = 2.em, fontWeight = FontWeight.Bold)
         LazyColumn(verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth().weight(8f)) {
-            item {
-                Surface {
-                    Text(text="Select Device", fontSize = 6.em, fontWeight = FontWeight.Bold, modifier = Modifier.padding(5.dp))
-                }
-            }
+        ) {
             items(devicePairingNames) { devicePairingName ->
-                Button(onClick = { selectDevice.invoke(devicePairingName) }) {
+                CompactButton(onClick = { selectDevice.invoke(devicePairingName) }) {
                     Text(devicePairingName)
                 }
             }
 
         }
-        Column(verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth().weight(1f)) {
-            HorizontalDivider(modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 5.dp))
-            Button(onClick = {
-                rescan.invoke()
-                devicePairingNames.clear()
-            }, modifier = Modifier.padding(10.dp, 0.dp).fillMaxWidth()) {
-                Text("RESCAN")
-            }
-        }
     }
 }
 
-@Preview(showBackground = true)
+@Preview(
+    device = WearDevices.LARGE_ROUND,
+    showSystemUi = true,
+    backgroundColor = 0xff000000,
+    showBackground = true
+)
 @Composable
 private fun DisplayMatchingDevicesPreview() {
     val testFlow = remember { MutableSharedFlow<String>(replay = 4) }
