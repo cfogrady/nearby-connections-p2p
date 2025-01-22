@@ -1,4 +1,5 @@
 [versions]
+projectVersion  = "0.1.0"
 agp = "8.7.3"
 kotlin = "2.0.0"
 coreKtx = "1.15.0"
@@ -10,7 +11,6 @@ playServicesNearby = "19.3.0"
 playServicesWearable = "19.0.0"
 composeBom = "2025.01.00"
 composeWearMaterial3 = "1.0.0-alpha31"
-composeWearMaterial = "1.4.0"
 composeWearFoundation = "1.4.0"
 wearToolingPreview = "1.0.0"
 activityCompose = "1.10.0"

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    id("maven-publish")
 }
 
 android {
@@ -29,6 +30,18 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
+    }
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("ReleaseAar") {
+            groupId = "com.github.cfogrady.nearby.connections.p2p"
+            artifactId = "connections"
+            version = libs.versions.projectVersion.get()
+
+            afterEvaluate { artifact(tasks.getByName("bundleReleaseAar")) }
+        }
     }
 }
 

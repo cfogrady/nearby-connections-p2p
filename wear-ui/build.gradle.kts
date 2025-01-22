@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("maven-publish")
 }
 
 android {
@@ -33,6 +34,18 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("ReleaseAar") {
+            groupId = "com.github.cfogrady.nearby.connections.p2p"
+            artifactId = "wear-ui"
+            version = libs.versions.projectVersion.get()
+
+            afterEvaluate { artifact(tasks.getByName("bundleReleaseAar")) }
+        }
     }
 }
 
