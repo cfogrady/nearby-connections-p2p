@@ -30,11 +30,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 class NearbyP2PConnection(
     context: Context,
     val serviceId: String,
-    val pairingName: String,
+    val pairingName: String = generateRandomPairingName(),
     var onReceive: (Payload)->Unit = {},
     var onTransferUpdate: (PayloadTransferUpdate)->Unit = {})
     {
@@ -45,6 +46,19 @@ class NearbyP2PConnection(
         const val PAYLOAD_TYPE_STREAM = Payload.Type.STREAM
         const val PAYLOAD_TYPE_FILE = Payload.Type.FILE
 
+        /**
+         * generateRandomPairingName generates a random 4-digit string.
+         */
+        @JvmStatic
+        fun generateRandomPairingName(): String {
+            val builder = StringBuilder()
+            for(i in 0..3) {
+                builder.append(Random.nextInt(65, 91).toChar())
+            }
+            return builder.toString()
+        }
+
+        @JvmStatic
         fun getMissingPermissions(activity: Activity): List<String> {
             val missingPermissions = mutableListOf<String>()
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

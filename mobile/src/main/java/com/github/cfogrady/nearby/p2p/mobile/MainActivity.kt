@@ -17,21 +17,11 @@ import com.github.cfogrady.nearby.connections.p2p.ConnectionStatus
 import com.github.cfogrady.nearby.connections.p2p.NearbyP2PConnection
 import com.github.cfogrady.nearby.connections.p2p.ui.DisplayMatchingDevices
 import java.nio.charset.StandardCharsets
-import kotlin.random.Random
-
 
 class MainActivity : ComponentActivity() {
 
     companion object {
         const val TEST_SERVICE_ID = "01948e9b-7815-70a5-b83e-d02b85fbd86c"
-
-        fun generateRandomCode(): String {
-            val builder = StringBuilder()
-            for(i in 0..3) {
-                builder.append(Random.nextInt(65, 91).toChar())
-            }
-            return builder.toString()
-        }
     }
 
     lateinit var nearbyConnections: NearbyP2PConnection
@@ -39,7 +29,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        nearbyConnections = NearbyP2PConnection(this, TEST_SERVICE_ID, generateRandomCode(), onReceive = {
+        nearbyConnections = NearbyP2PConnection(this, TEST_SERVICE_ID, onReceive = {
             if(it.type == NearbyP2PConnection.PAYLOAD_TYPE_BYTES) {
                 Toast.makeText(this, "Received Data: ${it.asBytes()?.toString(StandardCharsets.UTF_8)}", Toast.LENGTH_SHORT).show()
                 finish()
