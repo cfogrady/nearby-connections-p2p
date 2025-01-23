@@ -35,3 +35,38 @@ fun sendData(data: ByteArray) // send data once a connection is established
 fun close() // close any connections and/or discontinue searching.
 
 ```
+
+There is also a helper composable which allows the user to select the device against which to connect:
+```
+@Composable
+fun DisplayMatchingDevices(
+    deviceName: String, // local device name (so user can share with peer)
+    discoveredDevicesFlow: Flow<String>, // the discoveredDevicesFlow directly from the class to populate discovered devices
+    rescan: ()->Unit, // called when the user wishes to clear the lsit and initiate a rescan
+    selectDevice: (String)->Unit) // called when the user selects a device
+```
+
+### Add As Dependencies
+The connections, ui, and wear-ui modules all have a tast to publishToMavenLocal. Execute the task for the ones to be used in the dependent project.
+
+Add mavenLocal to the repositories of the dependent project if not already present.
+```
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        mavenLocal() // add mavenLocal
+        ...
+    }
+}
+```
+
+Add the desired dependencies to the dependent project's dependencies
+```
+dependencies {
+    ...
+    implementation("com.github.cfogrady.nearby.connections.p2p:connections:0.1.0")
+    implementation("com.github.cfogrady.nearby.connections.p2p:ui:0.1.0")
+    // implementation("com.github.cfogrady.nearby.connections.p2p:wear-ui:0.1.0") // only for WearOS devices using the helper composable
+    ...
+}
+```
