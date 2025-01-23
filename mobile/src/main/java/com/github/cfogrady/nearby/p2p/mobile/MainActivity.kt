@@ -1,9 +1,12 @@
 package com.github.cfogrady.nearby.p2p.mobile
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -15,6 +18,7 @@ import com.github.cfogrady.nearby.connections.p2p.NearbyP2PConnection
 import com.github.cfogrady.nearby.connections.p2p.ui.DisplayMatchingDevices
 import java.nio.charset.StandardCharsets
 import kotlin.random.Random
+
 
 class MainActivity : ComponentActivity() {
 
@@ -31,6 +35,7 @@ class MainActivity : ComponentActivity() {
     }
 
     lateinit var nearbyConnections: NearbyP2PConnection
+    var needsPermissions: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +45,22 @@ class MainActivity : ComponentActivity() {
                 finish()
             }
         })
+        val permissionRequestLauncher = buildPermissionRequestLauncher { grantedPermissions->
+            Log.i("MainActivity", "Iterating permissions requested to check grant status")
+            for(grantedPermission in grantedPermissions) {
+                if(!grantedPermission.value) {
+                    Toast.makeText(this, "Nearby Communication requires all requested permissions to be enabled to run", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            }
+            needsPermissions = false
+        }
+        val missingPermissions = NearbyP2PConnection.getMissingPermissions(this)
+        if(missingPermissions.isNotEmpty()) {
+            needsPermissions = true
+            Log.i("MainActivity", "Requesting permissions: $missingPermissions")
+            permissionRequestLauncher.launch(missingPermissions.toTypedArray())
+        }
         setContent {
             val connectionState by nearbyConnections.connectionStatus.collectAsState()
             var selectedDevicePairingName by remember { mutableStateOf("") }
@@ -64,13 +85,24 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun buildPermissionRequestLauncher(resultBehavior: (Map<String, Boolean>)->Unit): ActivityResultLauncher<Array<String>> {
+        val multiplePermissionsContract = ActivityResultContracts.RequestMultiplePermissions()
+        val launcher = registerForActivityResult(multiplePermissionsContract, resultBehavior)
+        return launcher
+    }
+
     override fun onResume() {
         super.onResume()
-        nearbyConnections.search()
+        Log.i("MainActivity", "Resuming")
+        if(!needsPermissions) {
+            Log.i("MainActivity", "Searching")
+            nearbyConnections.search()
+        }
     }
 
     override fun onPause() {
         super.onPause()
+        Log.i("MainActivity", "Pausing")
         nearbyConnections.close()
     }
 }

@@ -1,7 +1,13 @@
 package com.github.cfogrady.nearby.connections.p2p
 
+import android.Manifest
+import android.app.Activity
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.ConnectionInfo
@@ -34,10 +40,42 @@ class NearbyP2PConnection(
     {
 
     companion object {
-        const val TAG = "NearbyConnections"
+        const val TAG = "NearbyP2PConnection"
         const val PAYLOAD_TYPE_BYTES = Payload.Type.BYTES
         const val PAYLOAD_TYPE_STREAM = Payload.Type.STREAM
         const val PAYLOAD_TYPE_FILE = Payload.Type.FILE
+
+        fun getMissingPermissions(activity: Activity): List<String> {
+            val missingPermissions = mutableListOf<String>()
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (!hasPermission(activity, Manifest.permission.NEARBY_WIFI_DEVICES)) {
+                    missingPermissions.add(Manifest.permission.NEARBY_WIFI_DEVICES)
+                }
+            }
+            if(Build.VERSION.SDK_INT > Build.VERSION_CODES.S) {
+                if (!hasPermission(activity, Manifest.permission.BLUETOOTH_SCAN)) {
+                    missingPermissions.add(Manifest.permission.BLUETOOTH_SCAN)
+                }
+                if (!hasPermission(activity, Manifest.permission.BLUETOOTH_ADVERTISE)) {
+                    missingPermissions.add(Manifest.permission.BLUETOOTH_ADVERTISE)
+                }
+            } else {
+                if (!hasPermission(activity, Manifest.permission.BLUETOOTH)) {
+                    missingPermissions.add(Manifest.permission.BLUETOOTH)
+                }
+            }
+            if(!hasPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                missingPermissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+            return missingPermissions
+        }
+
+        private fun hasPermission(activity: Activity, permission: String): Boolean {
+            return ActivityCompat.checkSelfPermission(
+                activity,
+                permission
+            ) == PackageManager.PERMISSION_GRANTED
+        }
     }
 
     private val connectionsClient = Nearby.getConnectionsClient(context)
@@ -76,9 +114,9 @@ class NearbyP2PConnection(
     fun close() {
         connectionsClient.stopAllEndpoints()
         mutableDiscoveredDevices.resetReplayCache()
-        internalConnectionStatus.value = ConnectionStatus.DISCONNECTED
+        internalConnectionStatus.value = ConnectionStatus.IDLE
         remotePairingNameToEndpointId.clear()
-        selectedEndpointName = CompletableDeferred<String>()
+        selectedEndpointName = CompletableDeferred()
     }
 
     private fun startAdvertising() {
@@ -165,7 +203,11 @@ class NearbyP2PConnection(
 
     private val endpointDiscoveryCallback = object: EndpointDiscoveryCallback() {
         override fun onEndpointFound(endpointId: String, endpointInfo: DiscoveredEndpointInfo) {
-            Log.i(TAG, "Endpoint found: $endpointId, ${endpointInfo.endpointName}")
+            Log.i(TAG, "Endpoint found: $endpointId, ${endpointInfo.endpointName}, ${endpointInfo.serviceId}")
+            if(endpointInfo.endpointName == pairingName) {
+                Log.i(TAG, "Found Self")
+                return
+            }
             if(!remotePairingNameToEndpointId.containsKey(endpointInfo.endpointName)) {
                 CoroutineScope(Dispatchers.IO).launch {
                     mutableDiscoveredDevices.emit(endpointInfo.endpointName)
