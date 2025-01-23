@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.wear.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -33,10 +32,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 
 @Composable
-fun DisplayMatchingDevices(deviceName: String, deviceIdAndNameFlow: Flow<String>, rescan: ()->Unit, selectDevice: (String)->Unit) {
+fun DisplayMatchingDevices(deviceName: String, discoveredDevicesFlow: Flow<String>, rescan: ()->Unit, selectDevice: (String)->Unit) {
     val devicePairingNames = remember { mutableStateListOf<String>() }
     LaunchedEffect(true) {
-        deviceIdAndNameFlow.collect {
+        discoveredDevicesFlow.collect {
             devicePairingNames.add(it)
         }
     }
