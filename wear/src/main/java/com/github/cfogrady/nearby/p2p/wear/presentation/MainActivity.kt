@@ -6,9 +6,12 @@
 package com.github.cfogrady.nearby.p2p.wear.presentation
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,6 +33,7 @@ class MainActivity : ComponentActivity() {
     }
 
     lateinit var nearbyConnections: NearbyP2PConnection
+    var needsPermissions: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -41,6 +45,22 @@ class MainActivity : ComponentActivity() {
                 finish()
             }
         })
+        val permissionRequestLauncher = buildPermissionRequestLauncher { grantedPermissions->
+            Log.i("MainActivity", "Iterating permissions requested to check grant status")
+            for(grantedPermission in grantedPermissions) {
+                if(!grantedPermission.value) {
+                    Toast.makeText(this, "Nearby Communication requires all requested permissions to be enabled to run", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            }
+            needsPermissions = false
+        }
+        val missingPermissions = NearbyP2PConnection.getMissingPermissions(this)
+        if(missingPermissions.isNotEmpty()) {
+            needsPermissions = true
+            Log.i("MainActivity", "Requesting permissions: $missingPermissions")
+            permissionRequestLauncher.launch(missingPermissions.toTypedArray())
+        }
 
         setContent {
             WearApp("Android")
@@ -73,13 +93,24 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun buildPermissionRequestLauncher(resultBehavior: (Map<String, Boolean>)->Unit): ActivityResultLauncher<Array<String>> {
+        val multiplePermissionsContract = ActivityResultContracts.RequestMultiplePermissions()
+        val launcher = registerForActivityResult(multiplePermissionsContract, resultBehavior)
+        return launcher
+    }
+
     override fun onResume() {
         super.onResume()
-        nearbyConnections.search()
+        Log.i("MainActivity", "Resuming")
+        if(!needsPermissions) {
+            Log.i("MainActivity", "Searching")
+            nearbyConnections.search()
+        }
     }
 
     override fun onPause() {
         super.onPause()
+        Log.i("MainActivity", "Pausing")
         nearbyConnections.close()
     }
 }
