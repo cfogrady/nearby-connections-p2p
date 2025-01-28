@@ -12,7 +12,9 @@ import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.ConnectionInfo
 import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
+import com.google.android.gms.nearby.connection.ConnectionOptions
 import com.google.android.gms.nearby.connection.ConnectionResolution
+import com.google.android.gms.nearby.connection.ConnectionType
 import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
 import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo
 import com.google.android.gms.nearby.connection.DiscoveryOptions
@@ -73,6 +75,9 @@ class NearbyP2PConnection(
                 if (!hasPermission(activity, Manifest.permission.BLUETOOTH_ADVERTISE)) {
                     missingPermissions.add(Manifest.permission.BLUETOOTH_ADVERTISE)
                 }
+                if (!hasPermission(activity, Manifest.permission.BLUETOOTH_CONNECT)) {
+                    missingPermissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+                }
             } else {
                 if (!hasPermission(activity, Manifest.permission.BLUETOOTH)) {
                     missingPermissions.add(Manifest.permission.BLUETOOTH)
@@ -109,11 +114,18 @@ class NearbyP2PConnection(
     }
 
     fun connect(remotePairingName: String) {
+        Log.i(TAG, "Attempting to connect to $remotePairingName")
         internalConnectionStatus.value = ConnectionStatus.CONNECTING
         selectedEndpointName.complete(remotePairingName)
         if(pairingName > remotePairingName) {
             val remoteEndpointId = remotePairingNameToEndpointId[remotePairingName]!!
-            connectionsClient.requestConnection(pairingName, remoteEndpointId, connectionLifecycleCallback)
+            Log.i(TAG, "Requesting connection to endpoint $remoteEndpointId")
+            val task = connectionsClient.requestConnection(pairingName, remoteEndpointId, connectionLifecycleCallback)
+                .addOnFailureListener {
+                    Log.e(TAG, "Failed to request nearby p2p connection: $it")
+                }.addOnCanceledListener {
+                    Log.w(TAG, "Canceled to request connection")
+                }
         }
     }
 
