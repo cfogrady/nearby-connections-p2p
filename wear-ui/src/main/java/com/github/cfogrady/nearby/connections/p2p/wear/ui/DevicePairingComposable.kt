@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.wear.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -19,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -33,6 +35,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun DisplayMatchingDevices(deviceName: String, discoveredDevicesFlow: Flow<String>, rescan: ()->Unit, selectDevice: (String)->Unit) {
+    KeepScreenOn()
     val devicePairingNames = remember { mutableStateListOf<String>() }
     LaunchedEffect(true) {
         discoveredDevicesFlow.collect {
@@ -57,6 +60,17 @@ fun DisplayMatchingDevices(deviceName: String, discoveredDevicesFlow: Flow<Strin
                 }
             }
 
+        }
+    }
+}
+
+@Composable
+fun KeepScreenOn() {
+    val currentView = LocalView.current
+    DisposableEffect(Unit) {
+        currentView.keepScreenOn = true
+        onDispose {
+            currentView.keepScreenOn = false
         }
     }
 }
